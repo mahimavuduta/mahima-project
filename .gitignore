@@ -1,0 +1,43 @@
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# ── Virtual environments ──────────────────────────────────────────
+venv/
+env/
+.env
+.venv/
+
+# ── SQLite Database ───────────────────────────────────────────────
+# Uncomment below if you do NOT want to upload the database
+# *.db
+# *.sqlite3
+
+# ── macOS system files ────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+._*
+
+# ── Windows system files ──────────────────────────────────────────
+Thumbs.db
+desktop.ini
+
+# ── IDE / Editor files ────────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-project
+
+# ── Logs ─────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Sensitive files ───────────────────────────────────────────────
+secrets.py
+config_secret.py
+
+# ── Node (if any JS tooling) ─────────────────────────────────────
+node_modules/
+npm-debug.log*

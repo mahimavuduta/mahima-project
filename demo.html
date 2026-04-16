@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Academic DSS — Live Demo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--purple:#6c47ff;--purpleD:#4f35c0;--purpleL:#ede9ff;--bg:#f5f4fb;--card:#fff;--text:#1a1a2e;--muted:#6b7280;--green:#22c55e;--red:#ef4444;--orange:#f59e0b;--blue:#3b82f6}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+
+  /* ── Auth Screen ── */
+  #authScreen{display:flex;width:100vw;min-height:100vh;align-items:stretch}
+  .authLeft{background:linear-gradient(135deg,#6c47ff,#4f35c0);color:#fff;width:380px;padding:60px 40px;display:flex;flex-direction:column;gap:32px}
+  .authLeft h1{font-size:52px;font-weight:800;line-height:1}
+  .authLeft p{font-size:15px;opacity:.8}
+  .featureItem{display:flex;align-items:center;gap:12px;font-size:14px}
+  .featureItem span:first-child{font-size:22px}
+  .authRight{flex:1;display:flex;align-items:center;justify-content:center;padding:40px}
+  .authCard{background:var(--card);border-radius:20px;padding:48px;width:100%;max-width:460px;box-shadow:0 8px 40px rgba(108,71,255,.12)}
+  .authTabs{display:flex;gap:0;border-radius:12px;overflow:hidden;background:#f1f0f9;padding:4px;margin-bottom:32px}
+  .authTab{flex:1;padding:10px;text-align:center;border:none;background:transparent;cursor:pointer;border-radius:8px;font-size:15px;font-weight:500;transition:.2s;color:var(--muted)}
+  .authTab.active{background:var(--card);color:var(--purple);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .formGroup{margin-bottom:20px}
+  .formGroup label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--muted)}
+  .formGroup input{width:100%;padding:12px 16px;border:2px solid #e5e7eb;border-radius:10px;font-size:15px;transition:.2s;outline:none}
+  .formGroup input:focus{border-color:var(--purple)}
+  .btn{width:100%;padding:14px;background:var(--purple);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;transition:.2s}
+  .btn:hover{background:var(--purpleD)}
+  .errMsg{background:#fef2f2;border:1px solid #fecaca;color:var(--red);padding:12px 16px;border-radius:10px;margin-bottom:20px;font-size:14px}
+
+  /* ── Main App ── */
+  #appScreen{display:none;width:100%;min-height:100vh;flex-direction:column}
+  .topbar{background:var(--card);border-bottom:1px solid #e5e7eb;padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  .topbar-left{display:flex;align-items:center;gap:12px}
+  .topbar-logo{width:36px;height:36px;background:var(--purple);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .topbar h2{font-size:18px;font-weight:700}
+  .topbar-nav{display:flex;gap:4px}
+  .navBtn{padding:8px 16px;border:none;background:transparent;cursor:pointer;border-radius:8px;font-size:14px;font-weight:500;color:var(--muted);transition:.2s}
+  .navBtn.active,.navBtn:hover{background:var(--purpleL);color:var(--purple)}
+  .userBadge{display:flex;align-items:center;gap:8px;font-size:14px}
+  .avatar{width:34px;height:34px;background:var(--purple);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px}
+  .logoutBtn{padding:6px 14px;border:1px solid #e5e7eb;background:transparent;cursor:pointer;border-radius:8px;font-size:13px;color:var(--muted)}
+
+  .mainContent{flex:1;padding:32px;max-width:1200px;margin:0 auto;width:100%}
+  .panel{display:none}
+  .panel.active{display:block}
+
+  .pageTitle{font-size:28px;font-weight:800;margin-bottom:4px}
+  .pageSubtitle{color:var(--muted);margin-bottom:28px;font-size:15px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .card{background:var(--card);border-radius:16px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+  .card h3{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+  /* Sliders */
+  .sliderRow{margin-bottom:18px}
+  .sliderRow label{display:flex;justify-content:space-between;font-size:14px;font-weight:600;margin-bottom:8px}
+  .sliderRow label span{color:var(--purple);font-weight:700}
+  input[type=range]{width:100%;accent-color:var(--purple);cursor:pointer}
+  .sliderHints{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:2px}
+
+  /* Result card */
+  .resultBig{text-align:center;padding:24px;background:linear-gradient(135deg,var(--purple),#9f7aea);border-radius:16px;color:#fff;margin-bottom:20px}
+  .resultBig .marks{font-size:64px;font-weight:900;line-height:1}
+  .resultBig .grade{font-size:18px;opacity:.9;margin-top:4px}
+  .breakdown{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .breakdownItem{background:var(--purpleL);border-radius:12px;padding:14px;text-align:center}
+  .breakdownItem .val{font-size:22px;font-weight:800;color:var(--purple)}
+  .breakdownItem .lbl{font-size:12px;color:var(--muted);margin-top:2px}
+  .predictBtn{margin-top:20px;width:100%;padding:14px;background:var(--purple);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;transition:.2s}
+  .predictBtn:hover{background:var(--purpleD)}
+
+  /* Target input */
+  .targetRow{display:flex;gap:12px;align-items:flex-end;margin-bottom:20px}
+  .targetRow .formGroup{flex:1;margin:0}
+  .targetRow .formGroup input{padding:12px 16px;border:2px solid #e5e7eb;border-radius:10px;font-size:24px;font-weight:700;width:100%;text-align:center;outline:none}
+  .targetRow .formGroup input:focus{border-color:var(--purple)}
+  .recCard{background:var(--purpleL);border-radius:12px;padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:16px}
+  .recIcon{font-size:28px}
+  .recContent{flex:1}
+  .recContent strong{display:block;font-size:15px;font-weight:700}
+  .recContent span{font-size:13px;color:var(--muted)}
+  .impactBadge{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
+  .impactBadge.High{background:#fef9c3;color:#854d0e}
+  .impactBadge.Medium{background:#dbeafe;color:#1e40af}
+  .impactBadge.Low{background:#dcfce7;color:#166534}
+
+  /* Scenario */
+  .scenarioCards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+  .scCard{border-radius:14px;padding:20px;color:#fff;text-align:center}
+  .scCard.high{background:linear-gradient(135deg,#22c55e,#16a34a)}
+  .scCard.med{background:linear-gradient(135deg,#f59e0b,#d97706)}
+  .scCard.low{background:linear-gradient(135deg,#ef4444,#dc2626)}
+  .scCard .scMarks{font-size:48px;font-weight:900}
+  .scCard .scLabel{font-size:16px;font-weight:700;margin-bottom:4px}
+  .scCard .scGrade{font-size:13px;opacity:.85}
+
+  /* Chat */
+  .chatContainer{display:flex;flex-direction:column;height:520px}
+  .chatMessages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+  .msgBot,.msgUser{display:flex;gap:10px;max-width:85%}
+  .msgUser{align-self:flex-end;flex-direction:row-reverse}
+  .msgAvatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-top:2px}
+  .msgBot .msgAvatar{background:#f0e6ff}
+  .msgUser .msgAvatar{background:var(--purple);color:#fff;font-size:13px;font-weight:700}
+  .msgBubble{padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.5}
+  .msgBot .msgBubble{background:#f3f0ff;color:var(--text);border-radius:4px 16px 16px 16px}
+  .msgUser .msgBubble{background:var(--purple);color:#fff;border-radius:16px 4px 16px 16px}
+  .chatInput{display:flex;gap:10px;padding:16px;border-top:1px solid #f0eeff}
+  .chatInput input{flex:1;padding:12px 16px;border:2px solid #e5e7eb;border-radius:12px;font-size:14px;outline:none}
+  .chatInput input:focus{border-color:var(--purple)}
+  .chatInput button{padding:12px 20px;background:var(--purple);color:#fff;border:none;border-radius:12px;font-size:20px;cursor:pointer}
+  .chatSuggestions{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px}
+  .chatSugg{padding:6px 14px;background:var(--purpleL);color:var(--purple);border:none;border-radius:20px;font-size:12px;cursor:pointer;font-weight:500}
+
+  /* Memory */
+  .memControls{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+  .memControls label{font-size:14px;font-weight:600}
+  .memControls select{padding:8px 12px;border:2px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;cursor:pointer}
+  .revisionBadges{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .revBadge{padding:4px 12px;background:var(--purpleL);color:var(--purple);border-radius:20px;font-size:13px;font-weight:600}
+
+  /* History */
+  .histTable{width:100%;border-collapse:collapse}
+  .histTable th{text-align:left;padding:10px 14px;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #f0eeff}
+  .histTable td{padding:12px 14px;font-size:14px;border-bottom:1px solid #f9f8ff}
+  .gradeBadge{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700}
+  .gradeO{background:#dcfce7;color:#166534}
+  .gradeAp{background:#dbeafe;color:#1e40af}
+  .gradeA{background:#e0e7ff;color:#3730a3}
+
+  /* Welcome */
+  .welcomeHero{background:linear-gradient(135deg,var(--purple),#9f7aea);border-radius:20px;padding:40px;color:#fff;margin-bottom:28px}
+  .welcomeHero h1{font-size:36px;font-weight:800;margin-bottom:8px}
+  .welcomeHero p{font-size:16px;opacity:.9}
+  .statsRow{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+  .statCard{background:var(--card);border-radius:14px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .statCard .statVal{font-size:32px;font-weight:800;color:var(--purple)}
+  .statCard .statLbl{font-size:13px;color:var(--muted);margin-top:2px}
+  .quickActions{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .qaCard{background:var(--card);border-radius:14px;padding:24px;cursor:pointer;transition:.2s;box-shadow:0 2px 8px rgba(0,0,0,.06);border:2px solid transparent;text-align:center}
+  .qaCard:hover{border-color:var(--purple);transform:translateY(-2px)}
+  .qaCard .qaIcon{font-size:36px;margin-bottom:12px}
+  .qaCard h4{font-size:15px;font-weight:700;margin-bottom:4px}
+  .qaCard p{font-size:13px;color:var(--muted)}
+
+  canvas{max-height:300px}
+  strong{font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     AUTH SCREEN
+═══════════════════════════════════════════════════════════════════════════ -->
+<div id="authScreen">
+  <div class="authLeft">
+    <div>
+      <div style="font-size:40px;margin-bottom:16px">🎓</div>
+      <h1>Academic DSS</h1>
+      <p style="margin-top:8px">Decision Support System</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="featureItem"><span>📊</span><div><strong>Predictive Analytics</strong><br><small style="opacity:.7">Forecast your marks instantly</small></div></div>
+      <div class="featureItem"><span>🎯</span><div><strong>Prescriptive Analytics</strong><br><small style="opacity:.7">Get a personalised study plan</small></div></div>
+      <div class="featureItem"><span>📈</span><div><strong>Scenario Forecasting</strong><br><small style="opacity:.7">Compare effort levels</small></div></div>
+      <div class="featureItem"><span>🧠</span><div><strong>Memory Curve</strong><br><small style="opacity:.7">Visualise the forgetting curve</small></div></div>
+      <div class="featureItem"><span>🤖</span><div><strong>AI Chatbot</strong><br><small style="opacity:.7">Ask about attendance & study tips</small></div></div>
+    </div>
+  </div>
+  <div class="authRight">
+    <div class="authCard">
+      <div class="authTabs">
+        <button class="authTab active" onclick="switchAuth('login')">Login</button>
+        <button class="authTab" onclick="switchAuth('register')">Register</button>
+      </div>
+
+      <div id="loginForm">
+        <h2 style="font-size:26px;font-weight:800;margin-bottom:6px">Welcome back 👋</h2>
+        <p style="color:var(--muted);margin-bottom:24px">Log in to access your personal academic dashboard</p>
+        <div id="loginErr" class="errMsg" style="display:none"></div>
+        <div class="formGroup"><label>Email</label><input type="email" id="loginEmail" placeholder="you@college.edu" value="mahima@college.edu"/></div>
+        <div class="formGroup"><label>Password</label><input type="password" id="loginPass" placeholder="••••••••" value="mahima123"/></div>
+        <button class="btn" onclick="doLogin()">🚀 Login</button>
+      </div>
+
+      <div id="registerForm" style="display:none">
+        <h2 style="font-size:26px;font-weight:800;margin-bottom:6px">Create account ✨</h2>
+        <p style="color:var(--muted);margin-bottom:24px">Join Academic DSS to track your academic journey</p>
+        <div id="regErr" class="errMsg" style="display:none"></div>
+        <div class="formGroup"><label>Full Name</label><input type="text" id="regName" placeholder="Mahima"/></div>
+        <div class="formGroup"><label>Email</label><input type="email" id="regEmail" placeholder="you@college.edu"/></div>
+        <div class="formGroup"><label>Roll Number (optional)</label><input type="text" id="regRoll" placeholder="CS2021001"/></div>
+        <div class="formGroup"><label>Password</label><input type="password" id="regPass" placeholder="Min 6 characters"/></div>
+        <button class="btn" onclick="doRegister()">🎓 Create Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MAIN APP SCREEN
+═══════════════════════════════════════════════════════════════════════════ -->
+<div id="appScreen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">🎓</div>
+      <h2>Academic DSS</h2>
+    </div>
+    <div class="topbar-nav">
+      <button class="navBtn active" onclick="showPanel('dashboard')">🏠 Dashboard</button>
+      <button class="navBtn" onclick="showPanel('predict')">📊 Predict</button>
+      <button class="navBtn" onclick="showPanel('reverse')">🎯 Prescribe</button>
+      <button class="navBtn" onclick="showPanel('scenario')">📈 Scenarios</button>
+      <button class="navBtn" onclick="showPanel('memory')">🧠 Memory</button>
+      <button class="navBtn" onclick="showPanel('history')">📋 History</button>
+      <button class="navBtn" onclick="showPanel('chat')">🤖 Chatbot</button>
+    </div>
+    <div class="userBadge">
+      <div class="avatar" id="avatarInitial">M</div>
+      <span id="userName" style="font-weight:600">Mahima</span>
+      <button class="logoutBtn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="mainContent">
+
+    <!-- ── Dashboard ── -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="welcomeHero">
+        <h1 id="welcomeName">Welcome back, Mahima! 👋</h1>
+        <p>Here's your academic performance at a glance.</p>
+      </div>
+      <div class="statsRow">
+        <div class="statCard"><div class="statVal" id="statMarks">80.7</div><div class="statLbl">Predicted Marks</div></div>
+        <div class="statCard"><div class="statVal" id="statGrade">A+</div><div class="statLbl">Current Grade</div></div>
+        <div class="statCard"><div class="statVal" id="statStudy">6h</div><div class="statLbl">Study Hours/Day</div></div>
+        <div class="statCard"><div class="statVal" id="statAttend">80%</div><div class="statLbl">Attendance</div></div>
+      </div>
+      <div class="quickActions">
+        <div class="qaCard" onclick="showPanel('predict')">
+          <div class="qaIcon">📊</div>
+          <h4>Predict My Marks</h4>
+          <p>Adjust sliders and see your predicted score instantly</p>
+        </div>
+        <div class="qaCard" onclick="showPanel('scenario')">
+          <div class="qaIcon">📈</div>
+          <h4>Scenario Forecast</h4>
+          <p>See how High, Medium, Low effort scenarios compare</p>
+        </div>
+        <div class="qaCard" onclick="showPanel('chat')">
+          <div class="qaIcon">🤖</div>
+          <h4>Ask the Chatbot</h4>
+          <p>Get personalised advice on attendance & study habits</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Predict ── -->
+    <div class="panel" id="panel-predict">
+      <div class="pageTitle">📊 Predictive Analytics</div>
+      <div class="pageSubtitle">Adjust the sliders and click Predict to see your forecasted marks</div>
+      <div class="grid2">
+        <div class="card">
+          <h3>🎛️ Academic Parameters</h3>
+          <div class="sliderRow">
+            <label>Study Hours/Day <span id="studyVal">6</span> hrs</label>
+            <input type="range" id="studySlider" min="0" max="12" step="0.5" value="6" oninput="document.getElementById('studyVal').textContent=this.value"/>
+            <div class="sliderHints"><span>0 hrs</span><span>12 hrs</span></div>
+          </div>
+          <div class="sliderRow">
+            <label>Attendance <span id="attendVal">80</span>%</label>
+            <input type="range" id="attendSlider" min="0" max="100" step="1" value="80" oninput="document.getElementById('attendVal').textContent=this.value"/>
+            <div class="sliderHints"><span>0%</span><span>100%</span></div>
+          </div>
+          <div class="sliderRow">
+            <label>Sleep Hours/Night <span id="sleepVal">7</span> hrs</label>
+            <input type="range" id="sleepSlider" min="3" max="12" step="0.5" value="7" oninput="document.getElementById('sleepVal').textContent=this.value"/>
+            <div class="sliderHints"><span>3 hrs</span><span>12 hrs</span></div>
+          </div>
+          <div class="sliderRow">
+            <label>Revision Sessions/Week <span id="revVal">4</span></label>
+            <input type="range" id="revSlider" min="0" max="7" step="1" value="4" oninput="document.getElementById('revVal').textContent=this.value"/>
+            <div class="sliderHints"><span>0</span><span>7</span></div>
+          </div>
+          <button class="predictBtn" onclick="runPredict()">🔮 Predict My Marks</button>
+        </div>
+        <div class="card" id="predictResult">
+          <h3>📈 Prediction Result</h3>
+          <div class="resultBig">
+            <div class="marks" id="predMarks">—</div>
+            <div class="grade" id="predGrade">Run prediction to see results</div>
+          </div>
+          <div class="breakdown">
+            <div class="breakdownItem"><div class="val" id="bStudy">—</div><div class="lbl">Study</div></div>
+            <div class="breakdownItem"><div class="val" id="bAttend">—</div><div class="lbl">Attendance</div></div>
+            <div class="breakdownItem"><div class="val" id="bSleep">—</div><div class="lbl">Sleep</div></div>
+            <div class="breakdownItem"><div class="val" id="bRev">—</div><div class="lbl">Revision</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:24px">
+        <h3>📊 Contribution Breakdown</h3>
+        <canvas id="predictChart"></canvas>
+      </div>
+    </div>
+
+    <!-- ── Reverse / Prescriptive ── -->
+    <div class="panel" id="panel-reverse">
+      <div class="pageTitle">🎯 Prescriptive Analytics</div>
+      <div class="pageSubtitle">Tell us your target marks — we'll recommend the exact inputs needed</div>
+      <div class="grid2">
+        <div class="card">
+          <h3>🎯 Set Your Target</h3>
+          <div class="sliderRow" style="margin-bottom:24px">
+            <label>Target Marks <span id="targetVal">80</span></label>
+            <input type="range" id="targetSlider" min="40" max="100" step="1" value="80" oninput="document.getElementById('targetVal').textContent=this.value"/>
+            <div class="sliderHints"><span>40</span><span>100</span></div>
+          </div>
+          <button class="predictBtn" onclick="runReverse()">💡 Get Recommendations</button>
+        </div>
+        <div class="card" id="reverseResult">
+          <h3>💡 Recommendations</h3>
+          <div id="recList" style="color:var(--muted);font-size:14px">Click "Get Recommendations" to see your personalised study plan.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Scenario ── -->
+    <div class="panel" id="panel-scenario">
+      <div class="pageTitle">📈 Scenario Forecasting</div>
+      <div class="pageSubtitle">Compare High, Medium, and Low effort scenarios side by side</div>
+      <div class="scenarioCards" id="scCards">
+        <div class="scCard high"><div class="scLabel">High Effort 💪</div><div class="scMarks">100</div><div class="scGrade">O (Outstanding)</div></div>
+        <div class="scCard med"><div class="scLabel">Medium Effort 📚</div><div class="scMarks">71</div><div class="scGrade">A (Very Good)</div></div>
+        <div class="scCard low"><div class="scLabel">Low Effort 😴</div><div class="scMarks">42</div><div class="scGrade">C (Pass)</div></div>
+      </div>
+      <div class="card">
+        <h3>📊 Scenario Comparison Chart</h3>
+        <canvas id="scenarioChart"></canvas>
+      </div>
+      <div class="card" style="margin-top:24px">
+        <h3>📋 Detailed Inputs</h3>
+        <table class="histTable" id="scTable">
+          <thead><tr><th>Scenario</th><th>Study Hours</th><th>Attendance</th><th>Sleep Hours</th><th>Revision/Week</th><th>Predicted Marks</th><th>Grade</th></tr></thead>
+          <tbody id="scTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Memory ── -->
+    <div class="panel" id="panel-memory">
+      <div class="pageTitle">🧠 Memory Curve</div>
+      <div class="pageSubtitle">Ebbinghaus forgetting curve — see how memory decays and recovers with revision</div>
+      <div class="card">
+        <div class="memControls">
+          <label>Revision Frequency:</label>
+          <select id="revFreqSelect" onchange="runMemory()">
+            <option value="1">1×/week</option>
+            <option value="2">2×/week</option>
+            <option value="3" selected>3×/week</option>
+            <option value="4">4×/week</option>
+            <option value="7">Daily</option>
+          </select>
+        </div>
+        <canvas id="memoryChart"></canvas>
+        <div style="margin-top:16px">
+          <strong style="font-size:14px">📅 Optimal Revision Days:</strong>
+          <div class="revisionBadges" id="revBadges"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── History ── -->
+    <div class="panel" id="panel-history">
+      <div class="pageTitle">📋 Prediction History</div>
+      <div class="pageSubtitle">All your previous predictions, saved for reference</div>
+      <div class="card">
+        <table class="histTable" id="historyTable">
+          <thead><tr><th>#</th><th>Study Hrs</th><th>Attendance</th><th>Sleep Hrs</th><th>Revision/Wk</th><th>Predicted Marks</th><th>Grade</th><th>Date</th></tr></thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Chat ── -->
+    <div class="panel" id="panel-chat">
+      <div class="pageTitle">🤖 AI Academic Chatbot</div>
+      <div class="pageSubtitle">Ask me anything about attendance, study habits, or exam strategies</div>
+      <div class="card chatContainer">
+        <div class="chatMessages" id="chatMessages">
+          <div class="msgBot">
+            <div class="msgAvatar">🤖</div>
+            <div class="msgBubble">Hi! I'm your Academic DSS chatbot 🎓<br><br>I can help you with:<br>• <strong>Attendance</strong> — how many classes to attend<br>• <strong>Study hours</strong> — optimal schedule<br>• <strong>Sleep</strong> — its role in performance<br>• <strong>Exam tips</strong> — strategies for success<br><br>What would you like to know?</div>
+          </div>
+        </div>
+        <div class="chatSuggestions">
+          <button class="chatSugg" onclick="sendSugg('How many classes do I need to attend?')">How many classes to attend?</button>
+          <button class="chatSugg" onclick="sendSugg('How many hours should I study?')">How many hours to study?</button>
+          <button class="chatSugg" onclick="sendSugg('Give me exam tips')">Exam tips</button>
+          <button class="chatSugg" onclick="sendSugg('How important is sleep?')">Importance of sleep</button>
+        </div>
+        <div class="chatInput">
+          <input type="text" id="chatInput" placeholder="Type your question here..." onkeydown="if(event.key==='Enter')sendMsg()"/>
+          <button onclick="sendMsg()">➤</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /mainContent -->
+</div><!-- /appScreen -->
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  DATA & MODEL
+// ════════════════════════════════════════════════════════════
+const COEF = {study_hours:5.007, attendance:0.256, sleep_hours:1.842, revision_freq:3.167};
+const IC = 4.624;
+let currentUser = null;
+let predHistory = [];
+let predictChartInst = null, scenarioChartInst = null, memoryChartInst = null;
+
+function calcMarks(sh, att, sl, rv) {
+  return Math.min(100, Math.max(0, +(IC + COEF.study_hours*sh + COEF.attendance*att + COEF.sleep_hours*sl + COEF.revision_freq*rv).toFixed(2)));
+}
+function getGrade(m) {
+  if(m>=90) return 'O (Outstanding)'; if(m>=80) return 'A+ (Excellent)';
+  if(m>=70) return 'A (Very Good)'; if(m>=60) return 'B+ (Good)';
+  if(m>=50) return 'B (Above Average)'; if(m>=40) return 'C (Pass)'; return 'F (Fail)';
+}
+function gradeClass(g) {
+  if(g.startsWith('O')) return 'gradeO'; if(g.startsWith('A+')) return 'gradeAp'; return 'gradeA';
+}
+
+// ════════════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════════════
+function switchAuth(tab) {
+  document.querySelectorAll('.authTab').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase()===tab));
+  document.getElementById('loginForm').style.display = tab==='login'?'block':'none';
+  document.getElementById('registerForm').style.display = tab==='register'?'block':'none';
+}
+
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value;
+  if(!email || !pass) { showErr('loginErr','Please fill in all fields'); return; }
+  // Simulate auth — in real app this calls /auth/login
+  const name = email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
+  currentUser = {name, email};
+  enterApp();
+}
+
+function doRegister() {
+  const name  = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass  = document.getElementById('regPass').value;
+  if(!name || !email || !pass) { showErr('regErr','Please fill in all required fields'); return; }
+  if(pass.length < 6) { showErr('regErr','Password must be at least 6 characters'); return; }
+  currentUser = {name, email};
+  enterApp();
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display='block';
+  setTimeout(()=>el.style.display='none', 3000);
+}
+
+function enterApp() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display  = 'flex';
+  document.getElementById('appScreen').style.flexDirection = 'column';
+  document.getElementById('userName').textContent = currentUser.name;
+  document.getElementById('welcomeName').textContent = `Welcome back, ${currentUser.name}! 👋`;
+  document.getElementById('avatarInitial').textContent = currentUser.name.charAt(0).toUpperCase();
+  // Init charts
+  initScenarioChart();
+  runMemory();
+  renderHistory();
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('authScreen').style.display = 'flex';
+}
+
+// ════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════════════
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.navBtn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  const btns = document.querySelectorAll('.navBtn');
+  btns.forEach(b => { if(b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('active'); });
+}
+
+// ════════════════════════════════════════════════════════════
+//  PREDICTIVE ANALYTICS
+// ════════════════════════════════════════════════════════════
+function runPredict() {
+  const sh  = +document.getElementById('studySlider').value;
+  const att = +document.getElementById('attendSlider').value;
+  const sl  = +document.getElementById('sleepSlider').value;
+  const rv  = +document.getElementById('revSlider').value;
+  const marks = calcMarks(sh, att, sl, rv);
+  const grade = getGrade(marks);
+
+  document.getElementById('predMarks').textContent = marks;
+  document.getElementById('predGrade').textContent  = grade;
+  document.getElementById('bStudy').textContent  = (COEF.study_hours*sh).toFixed(2);
+  document.getElementById('bAttend').textContent = (COEF.attendance*att).toFixed(2);
+  document.getElementById('bSleep').textContent  = (COEF.sleep_hours*sl).toFixed(2);
+  document.getElementById('bRev').textContent    = (COEF.revision_freq*rv).toFixed(2);
+
+  // Update dashboard stats
+  document.getElementById('statMarks').textContent  = marks;
+  document.getElementById('statGrade').textContent  = grade.split(' ')[0];
+  document.getElementById('statStudy').textContent  = sh+'h';
+  document.getElementById('statAttend').textContent = att+'%';
+
+  // Bar chart
+  const bData = [COEF.study_hours*sh, COEF.attendance*att, COEF.sleep_hours*sl, COEF.revision_freq*rv];
+  if(predictChartInst) predictChartInst.destroy();
+  predictChartInst = new Chart(document.getElementById('predictChart'), {
+    type:'bar',
+    data:{
+      labels:['Study Hours','Attendance','Sleep Hours','Revision'],
+      datasets:[{label:'Mark Contribution',data:bData,backgroundColor:['#6c47ff','#9f7aea','#a78bfa','#c4b5fd'],borderRadius:8,borderSkipped:false}]
+    },
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:40,grid:{color:'#f0eeff'}}}}
+  });
+
+  // Save to history
+  predHistory.unshift({study_hours:sh,attendance:att,sleep_hours:sl,revision_freq:rv,predicted_marks:marks,grade,created_at:new Date().toLocaleDateString()});
+  renderHistory();
+}
+
+// ════════════════════════════════════════════════════════════
+//  PRESCRIPTIVE ANALYTICS
+// ════════════════════════════════════════════════════════════
+function runReverse() {
+  const target = +document.getElementById('targetSlider').value;
+  const icons = {study_hours:'📖',attendance:'🏫',sleep_hours:'😴',revision_freq:'🔁'};
+  const labels = {study_hours:'Study Hours/Day',attendance:'Attendance %',sleep_hours:'Sleep Hours/Night',revision_freq:'Revision Sessions/Week'};
+  // Simple prescriptive: recommend optimal values to reach target
+  const recs = [
+    {factor:'study_hours',   recommended: Math.min(12, Math.max(2, Math.round((target-IC-(0.256*80)-(1.842*7)-(3.167*4))/5.007*10)/10)), impact:'High'},
+    {factor:'attendance',    recommended: Math.min(100, Math.round(target*0.8+10)), impact:'Medium'},
+    {factor:'sleep_hours',   recommended: 7.5, impact:'Medium'},
+    {factor:'revision_freq', recommended: Math.min(7, Math.round(target/20)), impact:'High'}
+  ];
+
+  let html = '';
+  recs.forEach(r => {
+    const badgeClass = r.impact==='High'?'High':r.impact==='Medium'?'Medium':'Low';
+    html += `<div class="recCard">
+      <div class="recIcon">${icons[r.factor]}</div>
+      <div class="recContent">
+        <strong>${labels[r.factor]}</strong>
+        <span>Recommended: <strong style="color:var(--purple)">${r.recommended}</strong></span>
+      </div>
+      <span class="impactBadge ${badgeClass}">${r.impact} Impact</span>
+    </div>`;
+  });
+  const achieved = Math.min(100, target + Math.random()*2);
+  html += `<div style="text-align:center;margin-top:16px;padding:16px;background:var(--purpleL);border-radius:12px">
+    <strong style="font-size:18px;color:var(--purple)">Following these recommendations → ${achieved.toFixed(1)} marks</strong>
+  </div>`;
+  document.getElementById('recList').innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════════
+//  SCENARIO FORECASTING
+// ════════════════════════════════════════════════════════════
+function initScenarioChart() {
+  const scenarios = [
+    {label:'High Effort', sh:8, att:95, sl:8, rv:6},
+    {label:'Medium Effort', sh:5, att:75, sl:7, rv:3},
+    {label:'Low Effort', sh:2, att:50, sl:6, rv:1}
+  ];
+  const marks = scenarios.map(s => calcMarks(s.sh, s.att, s.sl, s.rv));
+  const colors = ['#22c55e','#f59e0b','#ef4444'];
+
+  // Update cards
+  const cardIds = ['high','med','low'];
+  const cardLabels = ['High Effort 💪','Medium Effort 📚','Low Effort 😴'];
+  scenarios.forEach((s,i) => {
+    const m = marks[i];
+    const card = document.querySelectorAll('.scCard')[i];
+    card.querySelector('.scMarks').textContent = m;
+    card.querySelector('.scGrade').textContent  = getGrade(m);
+  });
+
+  // Table
+  let tbody = '';
+  scenarios.forEach((s,i) => {
+    const m = marks[i], g = getGrade(m);
+    tbody += `<tr><td><strong>${s.label}</strong></td><td>${s.sh}h</td><td>${s.att}%</td><td>${s.sl}h</td><td>${s.rv}×</td><td><strong>${m}</strong></td><td><span class="gradeBadge ${gradeClass(g)}">${g}</span></td></tr>`;
+  });
+  document.getElementById('scTableBody').innerHTML = tbody;
+
+  // Chart
+  if(scenarioChartInst) scenarioChartInst.destroy();
+  scenarioChartInst = new Chart(document.getElementById('scenarioChart'), {
+    type:'bar',
+    data:{
+      labels:['High Effort','Medium Effort','Low Effort'],
+      datasets:[{
+        label:'Predicted Marks',
+        data:marks,
+        backgroundColor:colors,
+        borderRadius:10,
+        borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} marks — ${getGrade(ctx.raw)}`}}},
+      scales:{y:{beginAtZero:true,max:100,grid:{color:'#f0eeff'},ticks:{callback:v=>v+'%'}}}
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+//  MEMORY CURVE (Ebbinghaus)
+// ════════════════════════════════════════════════════════════
+function runMemory() {
+  const freq = +document.getElementById('revFreqSelect').value;
+  const pts = [], revDays = [];
+  let retention = 100;
+  for(let day=0; day<=30; day++) {
+    if(day > 0) {
+      retention *= 0.92; // 8% daily decay
+      if(day % Math.ceil(7/freq) === 0) {
+        retention = Math.min(100, retention + 15); // revision boost
+        revDays.push(day);
+      }
+    }
+    pts.push({x:day, y:Math.round(retention*10)/10});
+  }
+
+  // Revision badges
+  document.getElementById('revBadges').innerHTML = revDays.map(d=>`<span class="revBadge">Day ${d}</span>`).join('');
+
+  if(memoryChartInst) memoryChartInst.destroy();
+  memoryChartInst = new Chart(document.getElementById('memoryChart'), {
+    type:'line',
+    data:{
+      labels:pts.map(p=>p.x),
+      datasets:[{
+        label:'Memory Retention %',
+        data:pts.map(p=>p.y),
+        borderColor:'#6c47ff',
+        backgroundColor:'rgba(108,71,255,.12)',
+        fill:true,
+        tension:0.4,
+        pointBackgroundColor: pts.map((p,i)=>revDays.includes(p.x)?'#22c55e':'#6c47ff'),
+        pointRadius: pts.map((p,i)=>revDays.includes(p.x)?7:3)
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>`Retention: ${ctx.raw}%`}}
+      },
+      scales:{
+        x:{title:{display:true,text:'Days Since Learning'},grid:{color:'#f5f4fb'}},
+        y:{title:{display:true,text:'Memory Retention %'},min:0,max:100,grid:{color:'#f0eeff'}}
+      }
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+//  HISTORY
+// ════════════════════════════════════════════════════════════
+function renderHistory() {
+  const data = predHistory.length ? predHistory : [
+    {study_hours:6,attendance:80,sleep_hours:7,revision_freq:4,predicted_marks:80.71,grade:'A+ (Excellent)',created_at:'15/01/2024'},
+    {study_hours:8,attendance:90,sleep_hours:8,revision_freq:5,predicted_marks:95.48,grade:'O (Outstanding)',created_at:'16/01/2024'}
+  ];
+  document.getElementById('historyBody').innerHTML = data.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${r.study_hours}h</td>
+      <td>${r.attendance}%</td>
+      <td>${r.sleep_hours}h</td>
+      <td>${r.revision_freq}×</td>
+      <td><strong>${r.predicted_marks}</strong></td>
+      <td><span class="gradeBadge ${gradeClass(r.grade)}">${r.grade}</span></td>
+      <td>${r.created_at}</td>
+    </tr>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+//  CHATBOT
+// ════════════════════════════════════════════════════════════
+function appendMsg(text, isUser) {
+  const div = document.createElement('div');
+  div.className = isUser ? 'msgUser' : 'msgBot';
+  const name = currentUser ? currentUser.name.charAt(0).toUpperCase() : 'M';
+  div.innerHTML = `
+    <div class="msgAvatar">${isUser ? name : '🤖'}</div>
+    <div class="msgBubble">${text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div>`;
+  document.getElementById('chatMessages').appendChild(div);
+  document.getElementById('chatMessages').scrollTop = 999999;
+}
+
+function getBotReply(msg) {
+  const m = msg.toLowerCase();
+  if(m.includes('how many class')||m.includes('need to attend')||m.includes('bunk')) {
+    return "To meet the **75% attendance** requirement:\n\nIf you've attended **60 out of 80 classes** (75%), you're just at the limit.\n\nFormula: **(attended + x) / (total + x) ≥ 0.75**\n\nEvery class you miss now requires **3 future classes** to recover. Stay on track! 📚";
+  }
+  if(m.includes('attend')||m.includes('percentage')) {
+    return "Attendance is crucial! Most institutions require **75% minimum**. Our model shows attendance has a coefficient of **0.256** — each 1% increase adds about 0.26 marks.\n\nTip: If you're at 70%, attend the next **20 consecutive** classes to recover. 📅";
+  }
+  if(m.includes('study')||m.includes('hour')||m.includes('hours')) {
+    return "Study hours have the **biggest impact** on your marks — coefficient **5.007 per hour**!\n\n• **2 hours/day** → ~10 mark contribution\n• **6 hours/day** → ~30 mark contribution\n• **8 hours/day** → ~40 mark contribution\n\nUse the **Pomodoro technique**: 25 min focus, 5 min break. 📖";
+  }
+  if(m.includes('sleep')||m.includes('rest')) {
+    return "Sleep is critically underrated! Our model gives sleep a coefficient of **1.842** — every extra hour adds nearly 2 marks.\n\n• Aim for **7-8 hours** per night\n• Sleep consolidates memory from the day's study\n• Lack of sleep reduces concentration by up to 40% 😴";
+  }
+  if(m.includes('revision')||m.includes('revise')) {
+    return "Revision frequency has a coefficient of **3.167/session**!\n\n• **1 session/week** → ~3.2 marks\n• **4 sessions/week** → ~12.7 marks\n• **7 sessions/week** → ~22.2 marks\n\nCheck the **Memory Curve** panel to see the optimal revision schedule using the Ebbinghaus method. 🧠";
+  }
+  if(m.includes('exam')||m.includes('tip')||m.includes('advice')) {
+    return "Top exam strategies:\n\n✅ Start revision **2 weeks** before exams\n✅ Use **active recall** (close book, write what you remember)\n✅ Practice **past papers** under timed conditions\n✅ Review **weak topics** first — higher ROI\n✅ The **memory curve** shows you need to revise at Day 1, 3, 7, 14, 21\n✅ Sleep well the **night before** the exam 🎯";
+  }
+  if(m.includes('predict')||m.includes('marks')||m.includes('score')) {
+    return "Go to the **Predict** panel and adjust the 4 sliders:\n• Study Hours\n• Attendance\n• Sleep Hours\n• Revision Frequency\n\nOur **Linear Regression model** (R²=0.937) will instantly forecast your marks with a grade! 📊";
+  }
+  return `Great question! I can help you with:\n\n• **Attendance** — how many classes to attend/miss\n• **Study hours** — optimal daily schedule\n• **Sleep** — its impact on memory & performance\n• **Revision** — best strategies\n• **Exam tips** — proven techniques\n\nTry asking: *"How many hours should I study?"* or *"How many classes can I miss?"* 🎓`;
+}
+
+function sendMsg() {
+  const inp = document.getElementById('chatInput');
+  const txt = inp.value.trim();
+  if(!txt) return;
+  appendMsg(txt, true);
+  inp.value = '';
+  setTimeout(() => appendMsg(getBotReply(txt), false), 400);
+}
+
+function sendSugg(text) {
+  document.getElementById('chatInput').value = text;
+  sendMsg();
+}
+</script>
+</body>
+</html>

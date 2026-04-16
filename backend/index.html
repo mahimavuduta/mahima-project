@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Academic DSS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --p:#6c47ff;--pd:#4f35c0;--pl:#ede9ff;--p10:rgba(108,71,255,.1);
+  --bg:#f4f3fb;--card:#fff;--txt:#1a1a2e;--mut:#6b7280;--bdr:#ece9f8;
+  --green:#22c55e;--red:#ef4444;--amber:#f59e0b;--blue:#3b82f6;
+  --shadow:0 2px 16px rgba(108,71,255,.09);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+     background:var(--bg);color:var(--txt);line-height:1.5}
+
+/* ══ AUTH SCREEN ══════════════════════════════════════════════════════════ */
+#authScreen{display:flex;min-height:100vh}
+.aLeft{width:420px;background:linear-gradient(160deg,#6c47ff 0%,#4f35c0 100%);
+       color:#fff;padding:64px 48px;display:flex;flex-direction:column;gap:40px}
+.aLeft .brand{display:flex;align-items:center;gap:14px}
+.aLeft .brand .ico{width:52px;height:52px;background:rgba(255,255,255,.18);
+                    border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px}
+.aLeft .brand h1{font-size:26px;font-weight:800}
+.aLeft .brand p{font-size:13px;opacity:.75;margin-top:2px}
+.aLeft h2{font-size:38px;font-weight:900;line-height:1.15}
+.featList{display:flex;flex-direction:column;gap:18px}
+.feat{display:flex;align-items:center;gap:14px;
+      background:rgba(255,255,255,.1);border-radius:14px;padding:14px 16px}
+.feat .fIco{font-size:24px;width:40px;text-align:center}
+.feat .fTxt strong{display:block;font-size:14px;font-weight:700}
+.feat .fTxt small{font-size:12px;opacity:.75}
+.aRight{flex:1;display:flex;align-items:center;justify-content:center;padding:40px}
+.aBox{background:#fff;border-radius:24px;padding:48px 44px;width:100%;max-width:460px;
+      box-shadow:0 16px 60px rgba(108,71,255,.14)}
+.aTabs{display:flex;background:#f0eeff;border-radius:14px;padding:4px;margin-bottom:32px}
+.aTab{flex:1;padding:11px;border:none;background:none;border-radius:10px;
+      font-size:15px;font-weight:600;cursor:pointer;color:var(--mut);transition:.2s}
+.aTab.on{background:#fff;color:var(--p);box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.aBox h2{font-size:28px;font-weight:900;margin-bottom:4px}
+.aBox .sub{color:var(--mut);font-size:14px;margin-bottom:28px}
+.errBox{background:#fef2f2;border:1.5px solid #fecaca;color:#dc2626;
+        padding:12px 16px;border-radius:12px;margin-bottom:20px;font-size:14px;display:none}
+.fld label{display:block;font-size:13px;font-weight:700;color:var(--mut);margin-bottom:6px}
+.fld input{width:100%;padding:13px 16px;border:2px solid #e5e7eb;border-radius:11px;
+           font-size:15px;outline:none;transition:border .2s;margin-bottom:18px}
+.fld input:focus{border-color:var(--p)}
+.bigBtn{width:100%;padding:15px;background:var(--p);color:#fff;border:none;
+        border-radius:13px;font-size:16px;font-weight:700;cursor:pointer;transition:.2s;
+        display:flex;align-items:center;justify-content:center;gap:8px}
+.bigBtn:hover{background:var(--pd);transform:translateY(-1px)}
+.bigBtn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+/* ══ APP LAYOUT ═══════════════════════════════════════════════════════════ */
+#appScreen{display:none;min-height:100vh}
+.appWrap{display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{width:260px;background:#fff;border-right:1px solid var(--bdr);
+         display:flex;flex-direction:column;position:fixed;height:100vh;z-index:50}
+.sbBrand{padding:24px 22px;border-bottom:1px solid var(--bdr);
+         display:flex;align-items:center;gap:12px}
+.sbBrand .ico{width:40px;height:40px;background:var(--p);border-radius:12px;
+               display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff}
+.sbBrand h2{font-size:17px;font-weight:800;color:var(--txt)}
+.sbBrand p{font-size:11px;color:var(--mut)}
+.sbNav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+.sbNav a{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;
+         cursor:pointer;font-size:14px;font-weight:600;color:var(--mut);
+         transition:.15s;text-decoration:none;border:none;background:none;width:100%}
+.sbNav a:hover{background:var(--pl);color:var(--p)}
+.sbNav a.on{background:var(--p);color:#fff}
+.sbNav a .ico{font-size:18px;width:22px;text-align:center}
+.sbSection{font-size:11px;font-weight:800;color:var(--mut);letter-spacing:.08em;
+           text-transform:uppercase;padding:14px 14px 6px}
+.sbUser{padding:16px;border-top:1px solid var(--bdr)}
+.sbUserBox{display:flex;align-items:center;gap:10px;padding:12px;
+           background:var(--pl);border-radius:12px}
+.sbAv{width:36px;height:36px;background:var(--p);border-radius:50%;
+      display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;flex-shrink:0}
+.sbUserInfo strong{display:block;font-size:14px;font-weight:700}
+.sbUserInfo small{font-size:12px;color:var(--mut)}
+.sbLogout{width:100%;margin-top:8px;padding:8px;background:none;border:1.5px solid var(--bdr);
+          border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--mut);transition:.2s}
+.sbLogout:hover{border-color:var(--red);color:var(--red)}
+
+/* Main content */
+.mainArea{margin-left:260px;flex:1;min-height:100vh;display:flex;flex-direction:column}
+.topBar{background:#fff;border-bottom:1px solid var(--bdr);padding:0 32px;height:64px;
+        display:flex;align-items:center;justify-content:space-between;
+        position:sticky;top:0;z-index:40}
+.tbLeft h2{font-size:20px;font-weight:800}
+.tbLeft p{font-size:13px;color:var(--mut)}
+.tbRight{display:flex;align-items:center;gap:10px}
+.badge{padding:6px 14px;background:var(--pl);color:var(--p);border-radius:20px;font-size:13px;font-weight:700}
+.content{padding:28px 32px;flex:1}
+
+/* Pages */
+.pg{display:none}.pg.on{display:block}
+
+/* Cards */
+.card{background:#fff;border-radius:18px;padding:24px;box-shadow:var(--shadow);border:1px solid var(--bdr)}
+.card h3{font-size:16px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.mt{margin-top:22px}
+
+/* Stats */
+.statCard{background:#fff;border-radius:16px;padding:20px 22px;box-shadow:var(--shadow);border:1px solid var(--bdr)}
+.statCard .val{font-size:34px;font-weight:900;color:var(--p)}
+.statCard .lbl{font-size:13px;color:var(--mut);margin-top:3px}
+.statCard .icon{font-size:26px;margin-bottom:8px}
+
+/* Sliders */
+.sRow{margin-bottom:20px}
+.sRow .sLbl{display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-bottom:8px}
+.sRow .sVal{color:var(--p);font-weight:900;font-size:16px;
+             background:var(--pl);border-radius:8px;padding:2px 10px;min-width:48px;text-align:center}
+input[type=range]{width:100%;accent-color:var(--p);height:6px;cursor:pointer;border-radius:4px}
+.sHints{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:4px}
+
+/* Result box */
+.resCard{background:linear-gradient(135deg,#6c47ff,#9f7aea);border-radius:18px;
+         padding:32px;text-align:center;color:#fff;margin-bottom:22px}
+.resCard .rNum{font-size:80px;font-weight:900;line-height:1}
+.resCard .rGrade{font-size:18px;opacity:.9;margin-top:6px;font-weight:600}
+.resCard .rSub{font-size:13px;opacity:.7;margin-top:4px}
+.bkGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bkItem{background:var(--pl);border-radius:14px;padding:16px;text-align:center}
+.bkItem .bkVal{font-size:24px;font-weight:900;color:var(--p)}
+.bkItem .bkLbl{font-size:12px;color:var(--mut);margin-top:4px}
+.predictBtn{width:100%;padding:15px;background:var(--p);color:#fff;border:none;
+            border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;margin-top:22px;
+            transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.predictBtn:hover{background:var(--pd)}
+.predictBtn:disabled{opacity:.6;cursor:not-allowed}
+
+/* Scenario cards */
+.scRow{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:24px}
+.scCard{border-radius:18px;padding:28px 22px;color:#fff;text-align:center;
+        box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.scCard.hi{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.scCard.me{background:linear-gradient(135deg,#f59e0b,#d97706)}
+.scCard.lo{background:linear-gradient(135deg,#ef4444,#dc2626)}
+.scCard .scTitle{font-size:14px;font-weight:700;opacity:.9;margin-bottom:8px}
+.scCard .scMark{font-size:64px;font-weight:900;line-height:1}
+.scCard .scGrade{font-size:13px;opacity:.85;margin-top:6px}
+
+/* Recommendations */
+.recItem{background:var(--pl);border-radius:14px;padding:16px 18px;
+         margin-bottom:14px;display:flex;align-items:center;gap:16px}
+.recItem .rIco{font-size:28px}
+.recItem .rBody{flex:1}
+.recItem .rBody strong{display:block;font-size:15px;font-weight:800;margin-bottom:2px}
+.recItem .rBody span{font-size:13px;color:var(--mut)}
+.impBadge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800;flex-shrink:0}
+.impH{background:#fef9c3;color:#854d0e}
+.impM{background:#dbeafe;color:#1e40af}
+.impL{background:#dcfce7;color:#166534}
+.recResult{text-align:center;padding:18px;background:linear-gradient(135deg,var(--p),#9f7aea);
+           border-radius:14px;color:#fff;margin-top:16px}
+.recResult strong{font-size:20px}
+
+/* Chatbot */
+.chatWrap{display:flex;flex-direction:column;height:580px;background:#fff;
+          border-radius:18px;box-shadow:var(--shadow);border:1px solid var(--bdr);overflow:hidden}
+.chatHead{background:linear-gradient(135deg,var(--p),#9f7aea);padding:18px 22px;color:#fff;
+          display:flex;align-items:center;gap:12px}
+.chatHead .cAv{width:40px;height:40px;background:rgba(255,255,255,.2);border-radius:50%;
+               display:flex;align-items:center;justify-content:center;font-size:20px}
+.chatHead .cInfo strong{display:block;font-size:15px;font-weight:700}
+.chatHead .cInfo span{font-size:12px;opacity:.8;display:flex;align-items:center;gap:4px}
+.chatHead .cInfo span::before{content:'';width:7px;height:7px;background:#22c55e;
+                               border-radius:50%;display:inline-block}
+.chatMsgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.mBot,.mUser{display:flex;gap:10px;max-width:82%}
+.mUser{align-self:flex-end;flex-direction:row-reverse}
+.mAv{width:34px;height:34px;border-radius:50%;flex-shrink:0;margin-top:2px;
+     display:flex;align-items:center;justify-content:center;font-size:16px}
+.mBot .mAv{background:var(--pl)}
+.mUser .mAv{background:var(--p);color:#fff;font-weight:900;font-size:13px}
+.mBbl{padding:12px 16px;border-radius:18px;font-size:14px;line-height:1.6}
+.mBot .mBbl{background:#f3f0ff;border-radius:4px 18px 18px 18px}
+.mUser .mBbl{background:var(--p);color:#fff;border-radius:18px 4px 18px 18px}
+.mTyping .mBbl{background:#f3f0ff;color:var(--mut);font-style:italic}
+.chatSugg{display:flex;flex-wrap:wrap;gap:8px;padding:12px 20px;border-top:1px solid var(--bdr)}
+.cSBtn{padding:7px 14px;background:var(--pl);color:var(--p);border:none;
+       border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+.cSBtn:hover{background:var(--p);color:#fff}
+.chatFoot{padding:14px 16px;border-top:1px solid var(--bdr);display:flex;gap:10px}
+.chatFoot input{flex:1;padding:12px 18px;border:2px solid var(--bdr);border-radius:14px;
+                font-size:14px;outline:none;transition:border .2s}
+.chatFoot input:focus{border-color:var(--p)}
+.chatFoot button{padding:12px 18px;background:var(--p);color:#fff;border:none;
+                 border-radius:14px;font-size:16px;cursor:pointer;transition:.2s}
+.chatFoot button:hover{background:var(--pd)}
+
+/* Memory */
+.memCtrl{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.memCtrl label{font-size:14px;font-weight:700}
+.memCtrl select{padding:9px 14px;border:2px solid var(--bdr);border-radius:10px;
+                font-size:14px;outline:none;cursor:pointer;font-weight:600}
+.revBadges{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.revB{padding:5px 14px;background:var(--pl);color:var(--p);border-radius:20px;font-size:13px;font-weight:700}
+
+/* History table */
+.hTable{width:100%;border-collapse:collapse}
+.hTable th{text-align:left;padding:11px 14px;font-size:12px;font-weight:800;
+           color:var(--mut);text-transform:uppercase;letter-spacing:.07em;
+           border-bottom:2px solid var(--bdr)}
+.hTable td{padding:13px 14px;font-size:14px;border-bottom:1px solid #faf8ff}
+.hTable tr:hover td{background:#faf9ff}
+.gBadge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:800}
+.gO{background:#dcfce7;color:#166534}
+.gA{background:#dbeafe;color:#1e40af}
+.gB{background:#e0e7ff;color:#3730a3}
+.gC{background:#fef9c3;color:#854d0e}
+
+/* Dashboard hero */
+.hero{background:linear-gradient(135deg,#6c47ff,#9f7aea);border-radius:22px;
+      padding:40px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden}
+.hero::after{content:'🎓';position:absolute;right:40px;top:50%;transform:translateY(-50%);
+             font-size:80px;opacity:.2}
+.hero h1{font-size:32px;font-weight:900;margin-bottom:8px}
+.hero p{font-size:15px;opacity:.85}
+.qaGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:22px}
+.qaCard{background:#fff;border-radius:16px;padding:24px;cursor:pointer;
+        border:2px solid transparent;transition:.2s;box-shadow:var(--shadow);text-align:center}
+.qaCard:hover{border-color:var(--p);transform:translateY(-3px);box-shadow:0 8px 30px rgba(108,71,255,.15)}
+.qaCard .qIco{font-size:36px;margin-bottom:12px}
+.qaCard h4{font-size:15px;font-weight:800;margin-bottom:4px}
+.qaCard p{font-size:13px;color:var(--mut)}
+
+/* Utility */
+.empty{text-align:center;padding:40px;color:var(--mut);font-size:14px}
+.spin{text-align:center;padding:24px;color:var(--mut);font-size:14px}
+canvas{max-height:320px!important}
+b,strong{font-weight:700}
+.pageHead{margin-bottom:24px}
+.pageHead h1{font-size:26px;font-weight:900;margin-bottom:4px}
+.pageHead p{color:var(--mut);font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ AUTH ═══════════════════════════════════════════════════════ -->
+<div id="authScreen">
+  <div class="aLeft">
+    <div class="brand">
+      <div class="ico">🎓</div>
+      <div><h1>Academic DSS</h1><p>Decision Support System</p></div>
+    </div>
+    <div>
+      <h2>Track. Predict. Achieve.</h2>
+    </div>
+    <div class="featList">
+      <div class="feat"><div class="fIco">📊</div><div class="fTxt"><strong>Predictive Analytics</strong><small>ML model forecasts your marks (R²=0.937)</small></div></div>
+      <div class="feat"><div class="fIco">🎯</div><div class="fTxt"><strong>Prescriptive Plan</strong><small>Get your personalised study recommendations</small></div></div>
+      <div class="feat"><div class="fIco">📈</div><div class="fTxt"><strong>Scenario Forecasting</strong><small>Compare High / Medium / Low effort</small></div></div>
+      <div class="feat"><div class="fIco">🧠</div><div class="fTxt"><strong>Memory Curve</strong><small>Ebbinghaus forgetting visualisation</small></div></div>
+      <div class="feat"><div class="fIco">🤖</div><div class="fTxt"><strong>AI Chatbot</strong><small>Attendance calculator & study tips</small></div></div>
+    </div>
+  </div>
+  <div class="aRight">
+    <div class="aBox">
+      <div class="aTabs">
+        <button class="aTab on" onclick="swTab('login')">Login</button>
+        <button class="aTab"    onclick="swTab('reg')">Register</button>
+      </div>
+
+      <!-- Login -->
+      <div id="fLogin">
+        <h2>Welcome back 👋</h2>
+        <p class="sub">Sign in to your academic dashboard</p>
+        <div class="errBox" id="eLogin"></div>
+        <div class="fld">
+          <label>Email Address</label>
+          <input type="email" id="lEmail" placeholder="you@college.edu"/>
+          <label>Password</label>
+          <input type="password" id="lPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
+        <button class="bigBtn" id="btnLogin" onclick="doLogin()">🚀 Login to Dashboard</button>
+      </div>
+
+      <!-- Register -->
+      <div id="fReg" style="display:none">
+        <h2>Create Account ✨</h2>
+        <p class="sub">Start tracking your academic journey</p>
+        <div class="errBox" id="eReg"></div>
+        <div class="fld">
+          <label>Full Name</label>
+          <input type="text" id="rName" placeholder="Your full name"/>
+          <label>Email Address</label>
+          <input type="email" id="rEmail" placeholder="you@college.edu"/>
+          <label>Roll Number <span style="font-weight:400;opacity:.6">(optional)</span></label>
+          <input type="text" id="rRoll" placeholder="CS2021001"/>
+          <label>Password</label>
+          <input type="password" id="rPass" placeholder="Minimum 6 characters" onkeydown="if(event.key==='Enter')doReg()"/>
+        </div>
+        <button class="bigBtn" id="btnReg" onclick="doReg()">🎓 Create My Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ APP ════════════════════════════════════════════════════════ -->
+<div id="appScreen">
+  <div class="appWrap">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sbBrand">
+        <div class="ico">🎓</div>
+        <div><h2>Academic DSS</h2><p>Decision Support System</p></div>
+      </div>
+      <div class="sbNav">
+        <span class="sbSection">Main</span>
+        <a onclick="go('dash')" class="on" id="nav-dash"><span class="ico">🏠</span> Dashboard</a>
+        <span class="sbSection">Analytics</span>
+        <a onclick="go('pred')" id="nav-pred"><span class="ico">📊</span> Predict Marks</a>
+        <a onclick="go('rev')"  id="nav-rev"><span class="ico">🎯</span> Prescriptive Plan</a>
+        <a onclick="go('sc')"   id="nav-sc"><span class="ico">📈</span> Scenario Forecast</a>
+        <span class="sbSection">Insights</span>
+        <a onclick="go('mem')"  id="nav-mem"><span class="ico">🧠</span> Memory Curve</a>
+        <a onclick="go('hist')" id="nav-hist"><span class="ico">📋</span> My History</a>
+        <span class="sbSection">Assistant</span>
+        <a onclick="go('chat')" id="nav-chat"><span class="ico">🤖</span> AI Chatbot</a>
+      </div>
+      <div class="sbUser">
+        <div class="sbUserBox">
+          <div class="sbAv" id="sbAv">M</div>
+          <div class="sbUserInfo">
+            <strong id="sbName">Student</strong>
+            <small id="sbEmail">Loading...</small>
+          </div>
+        </div>
+        <button class="sbLogout" onclick="logout()">🚪 Logout</button>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <div class="mainArea">
+      <div class="topBar">
+        <div class="tbLeft">
+          <h2 id="tbTitle">Dashboard</h2>
+          <p id="tbSub">Your academic overview</p>
+        </div>
+        <div class="tbRight">
+          <span class="badge" id="tbBadge">🟢 Server Connected</span>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- ── DASHBOARD ─────────────────────────────────────────── -->
+        <div class="pg on" id="pg-dash">
+          <div class="hero">
+            <h1 id="heroName">Welcome back! 👋</h1>
+            <p>Here's your academic performance at a glance. Make every session count.</p>
+          </div>
+          <div class="g4" style="margin-bottom:22px">
+            <div class="statCard"><div class="icon">📊</div><div class="val" id="dMarks">—</div><div class="lbl">Predicted Marks</div></div>
+            <div class="statCard"><div class="icon">🏆</div><div class="val" id="dGrade">—</div><div class="lbl">Current Grade</div></div>
+            <div class="statCard"><div class="icon">📚</div><div class="val" id="dStudy">—</div><div class="lbl">Study Hrs/Day</div></div>
+            <div class="statCard"><div class="icon">🏫</div><div class="val" id="dAtt">—</div><div class="lbl">Attendance</div></div>
+          </div>
+          <div class="qaGrid">
+            <div class="qaCard" onclick="go('pred')"><div class="qIco">📊</div><h4>Predict Marks</h4><p>Drag sliders and instantly forecast your score</p></div>
+            <div class="qaCard" onclick="go('sc')"><div class="qIco">📈</div><h4>Scenario Forecast</h4><p>Compare High, Medium and Low effort outcomes</p></div>
+            <div class="qaCard" onclick="go('rev')"><div class="qIco">🎯</div><h4>Get Study Plan</h4><p>Tell us your target — we'll build your plan</p></div>
+            <div class="qaCard" onclick="go('mem')"><div class="qIco">🧠</div><h4>Memory Curve</h4><p>See how revision timing affects retention</p></div>
+            <div class="qaCard" onclick="go('hist')"><div class="qIco">📋</div><h4>View History</h4><p>Review all your past predictions</p></div>
+            <div class="qaCard" onclick="go('chat')"><div class="qIco">🤖</div><h4>Ask Chatbot</h4><p>Get instant answers on attendance & study tips</p></div>
+          </div>
+        </div>
+
+        <!-- ── PREDICT ────────────────────────────────────────────── -->
+        <div class="pg" id="pg-pred">
+          <div class="pageHead">
+            <h1>📊 Predictive Analytics</h1>
+            <p>Adjust the sliders and click Predict — our Linear Regression model (R²=0.937) forecasts your marks instantly</p>
+          </div>
+          <div class="g2">
+            <div class="card">
+              <h3>🎛️ Adjust Parameters</h3>
+              <div class="sRow">
+                <div class="sLbl"><span>📖 Study Hours / Day</span><span class="sVal" id="sv">6</span></div>
+                <input type="range" id="ss" min="0" max="12" step="0.5" value="6" oninput="document.getElementById('sv').textContent=this.value"/>
+                <div class="sHints"><span>0 hrs</span><span>6 hrs</span><span>12 hrs</span></div>
+              </div>
+              <div class="sRow">
+                <div class="sLbl"><span>🏫 Attendance %</span><span class="sVal" id="av">80</span></div>
+                <input type="range" id="as" min="0" max="100" step="1" value="80" oninput="document.getElementById('av').textContent=this.value"/>
+                <div class="sHints"><span>0%</span><span>50%</span><span>100%</span></div>
+              </div>
+              <div class="sRow">
+                <div class="sLbl"><span>😴 Sleep Hours / Night</span><span class="sVal" id="slv">7</span></div>
+                <input type="range" id="sls" min="3" max="12" step="0.5" value="7" oninput="document.getElementById('slv').textContent=this.value"/>
+                <div class="sHints"><span>3 hrs</span><span>7 hrs</span><span>12 hrs</span></div>
+              </div>
+              <div class="sRow">
+                <div class="sLbl"><span>🔁 Revision Sessions / Week</span><span class="sVal" id="rv">4</span></div>
+                <input type="range" id="rs" min="0" max="7" step="1" value="4" oninput="document.getElementById('rv').textContent=this.value"/>
+                <div class="sHints"><span>0</span><span>3-4</span><span>7/day</span></div>
+              </div>
+              <button class="predictBtn" id="btnPredict" onclick="runPredict()">🔮 Predict My Marks</button>
+            </div>
+            <div>
+              <div class="card" style="margin-bottom:20px">
+                <h3>📈 Result</h3>
+                <div class="resCard" id="resCard">
+                  <div class="rNum" id="pNum">—</div>
+                  <div class="rGrade" id="pGrd">Click Predict to see your result</div>
+                  <div class="rSub" id="pSub"></div>
+                </div>
+                <div class="bkGrid">
+                  <div class="bkItem"><div class="bkVal" id="bS">—</div><div class="bkLbl">📖 Study</div></div>
+                  <div class="bkItem"><div class="bkVal" id="bA">—</div><div class="bkLbl">🏫 Attendance</div></div>
+                  <div class="bkItem"><div class="bkVal" id="bSl">—</div><div class="bkLbl">😴 Sleep</div></div>
+                  <div class="bkItem"><div class="bkVal" id="bR">—</div><div class="bkLbl">🔁 Revision</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card mt">
+            <h3>📊 Factor Contribution Chart</h3>
+            <canvas id="pChart" height="180"></canvas>
+          </div>
+        </div>
+
+        <!-- ── PRESCRIPTIVE ──────────────────────────────────────── -->
+        <div class="pg" id="pg-rev">
+          <div class="pageHead">
+            <h1>🎯 Prescriptive Analytics</h1>
+            <p>Set your target marks — we'll reverse-engineer the exact inputs you need to hit that score</p>
+          </div>
+          <div class="g2">
+            <div class="card">
+              <h3>🎯 Set Your Target Score</h3>
+              <div class="sRow">
+                <div class="sLbl"><span>Target Marks</span><span class="sVal" id="tv">80</span></div>
+                <input type="range" id="ts" min="40" max="100" step="1" value="80" oninput="document.getElementById('tv').textContent=this.value"/>
+                <div class="sHints"><span>40 (Minimum Pass)</span><span>100 (Outstanding)</span></div>
+              </div>
+              <button class="predictBtn" onclick="runReverse()">💡 Generate My Study Plan</button>
+            </div>
+            <div class="card">
+              <h3>💡 Personalised Recommendations</h3>
+              <div id="recOut"><div class="empty">👆 Set your target and click Generate to see your personalised plan.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SCENARIO ──────────────────────────────────────────── -->
+        <div class="pg" id="pg-sc">
+          <div class="pageHead">
+            <h1>📈 Scenario Forecasting</h1>
+            <p>See how your predicted marks change across three effort levels — choose your path!</p>
+          </div>
+          <div class="scRow" id="scCards">
+            <div class="scCard hi"><div class="scTitle">💪 High Effort</div><div class="scMark" id="scHi">—</div><div class="scGrade" id="scHiG">Loading...</div></div>
+            <div class="scCard me"><div class="scTitle">📚 Medium Effort</div><div class="scMark" id="scMe">—</div><div class="scGrade" id="scMeG">Loading...</div></div>
+            <div class="scCard lo"><div class="scTitle">😴 Low Effort</div><div class="scMark" id="scLo">—</div><div class="scGrade" id="scLoG">Loading...</div></div>
+          </div>
+          <div class="card">
+            <h3>📊 Scenario Comparison</h3>
+            <canvas id="scChart" height="200"></canvas>
+          </div>
+          <div class="card mt">
+            <h3>📋 Input Details for Each Scenario</h3>
+            <table class="hTable">
+              <thead><tr><th>Scenario</th><th>Study Hrs</th><th>Attendance</th><th>Sleep Hrs</th><th>Revision/Wk</th><th>Predicted Marks</th><th>Grade</th></tr></thead>
+              <tbody id="scTb"><tr><td colspan="7" class="spin">Loading scenarios...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── MEMORY ────────────────────────────────────────────── -->
+        <div class="pg" id="pg-mem">
+          <div class="pageHead">
+            <h1>🧠 Memory Retention Curve</h1>
+            <p>Based on Ebbinghaus forgetting curve — shows how memory decays without revision and recovers with it (green dots = revision days)</p>
+          </div>
+          <div class="card">
+            <div class="memCtrl">
+              <label>📅 Revision Frequency:</label>
+              <select id="mFreq" onchange="runMemory()">
+                <option value="1">Once a week</option>
+                <option value="2">Twice a week</option>
+                <option value="3" selected>3× per week</option>
+                <option value="4">4× per week</option>
+                <option value="7">Every day</option>
+              </select>
+            </div>
+            <canvas id="mChart" height="220"></canvas>
+            <div style="margin-top:18px">
+              <strong style="font-size:14px">📅 Suggested Revision Days:</strong>
+              <div class="revBadges" id="revBadges"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── HISTORY ───────────────────────────────────────────── -->
+        <div class="pg" id="pg-hist">
+          <div class="pageHead">
+            <h1>📋 Prediction History</h1>
+            <p>All your past predictions stored in your personal database — track your progress over time</p>
+          </div>
+          <div class="card">
+            <div id="histWrap">
+              <div class="spin" id="histLoad">⏳ Loading your history...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── CHATBOT ───────────────────────────────────────────── -->
+        <div class="pg" id="pg-chat">
+          <div class="pageHead">
+            <h1>🤖 AI Academic Chatbot</h1>
+            <p>Ask me anything about attendance, study planning, revision strategies or exam tips</p>
+          </div>
+          <div class="chatWrap">
+            <div class="chatHead">
+              <div class="cAv">🤖</div>
+              <div class="cInfo">
+                <strong>Academic Assistant</strong>
+                <span>Online — ready to help</span>
+              </div>
+            </div>
+            <div class="chatMsgs" id="chatMsgs">
+              <div class="mBot">
+                <div class="mAv">🤖</div>
+                <div class="mBbl">Hi there! 👋 I'm your <b>Academic Assistant</b>.<br><br>
+                  I can help you with:<br>
+                  • <b>Attendance</b> — how many classes to attend or how many you can miss<br>
+                  • <b>Study hours</b> — optimal schedule for your target marks<br>
+                  • <b>Sleep</b> — why rest matters for exam performance<br>
+                  • <b>Revision strategies</b> — space repetition & more<br>
+                  • <b>Exam tips</b> — proven techniques to score higher<br><br>
+                  What would you like to know?
+                </div>
+              </div>
+            </div>
+            <div class="chatSugg">
+              <button class="cSBtn" onclick="cSend('How many classes do I need to attend?')">🏫 How many classes to attend?</button>
+              <button class="cSBtn" onclick="cSend('How many hours should I study each day?')">📖 How many hours to study?</button>
+              <button class="cSBtn" onclick="cSend('Give me top exam tips')">🎯 Exam tips</button>
+              <button class="cSBtn" onclick="cSend('How important is sleep for studying?')">😴 Importance of sleep</button>
+              <button class="cSBtn" onclick="cSend('How do I improve my revision?')">🔁 Revision strategies</button>
+            </div>
+            <div class="chatFoot">
+              <input type="text" id="chatIn" placeholder="Ask about attendance, study tips, revision..."/>
+              <button onclick="sendChat()">➤</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /content -->
+    </div><!-- /mainArea -->
+  </div><!-- /appWrap -->
+</div><!-- /appScreen -->
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  GLOBALS
+// ════════════════════════════════════════════════════════════
+let TOKEN = '', USER = null;
+let pChartI = null, scChartI = null, mChartI = null;
+const PAGES = {
+  dash: ['Dashboard','Your academic overview'],
+  pred: ['Predict Marks','Linear Regression model (R²=0.937)'],
+  rev:  ['Prescriptive Plan','Reverse-engineer your target score'],
+  sc:   ['Scenario Forecasting','Compare effort levels side by side'],
+  mem:  ['Memory Curve','Ebbinghaus forgetting curve visualisation'],
+  hist: ['Prediction History','Your saved predictions'],
+  chat: ['AI Chatbot','Ask about attendance, study & exam tips'],
+};
+
+// ════════════════════════════════════════════════════════════
+//  API
+// ════════════════════════════════════════════════════════════
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(TOKEN ? {Authorization: 'Bearer ' + TOKEN} : {})
+    }
+  };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.detail || 'Server error (' + r.status + ')');
+  return data;
+}
+
+async function apiForm(path, params) {
+  const r = await fetch(path, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: new URLSearchParams(params).toString()
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.detail || 'Login failed');
+  return data;
+}
+
+// ════════════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════════════
+function swTab(t) {
+  document.querySelectorAll('.aTab').forEach(b => b.classList.toggle('on', b.textContent.toLowerCase().includes(t)));
+  document.getElementById('fLogin').style.display = t === 'login' ? 'block' : 'none';
+  document.getElementById('fReg').style.display   = t === 'reg'   ? 'block' : 'none';
+}
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
+}
+
+async function doLogin() {
+  const email = document.getElementById('lEmail').value.trim();
+  const pass  = document.getElementById('lPass').value;
+  if (!email || !pass) { showErr('eLogin', '⚠️ Please enter your email and password'); return; }
+  const btn = document.getElementById('btnLogin');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try {
+    const d = await apiForm('/auth/login', {username: email, password: pass});
+    TOKEN = d.access_token; USER = d.student;
+    openApp();
+  } catch(e) {
+    showErr('eLogin', '❌ ' + (e.message || 'Login failed. Check your email and password.'));
+  } finally {
+    btn.disabled = false; btn.innerHTML = '🚀 Login to Dashboard';
+  }
+}
+
+async function doReg() {
+  const name  = document.getElementById('rName').value.trim();
+  const email = document.getElementById('rEmail').value.trim();
+  const roll  = document.getElementById('rRoll').value.trim();
+  const pass  = document.getElementById('rPass').value;
+  if (!name || !email || !pass) { showErr('eReg', '⚠️ Name, email and password are required'); return; }
+  if (pass.length < 6) { showErr('eReg', '⚠️ Password must be at least 6 characters'); return; }
+  const btn = document.getElementById('btnReg');
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  try {
+    await api('POST', '/auth/register', {name, email, password: pass, roll_number: roll});
+    const d = await apiForm('/auth/login', {username: email, password: pass});
+    TOKEN = d.access_token; USER = d.student;
+    openApp();
+  } catch(e) {
+    showErr('eReg', '❌ ' + (e.message || 'Registration failed. Email may already be in use.'));
+  } finally {
+    btn.disabled = false; btn.innerHTML = '🎓 Create My Account';
+  }
+}
+
+function openApp() {
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display  = 'block';
+  document.getElementById('sbAv').textContent    = USER.name.charAt(0).toUpperCase();
+  document.getElementById('sbName').textContent  = USER.name;
+  document.getElementById('sbEmail').textContent = USER.email;
+  document.getElementById('heroName').textContent = 'Welcome back, ' + USER.name.split(' ')[0] + '! 👋';
+  // Load all data
+  loadScenario();
+  runMemory();
+  loadHistory();
+}
+
+function logout() {
+  TOKEN = ''; USER = null;
+  document.getElementById('appScreen').style.display  = 'none';
+  document.getElementById('authScreen').style.display = 'flex';
+}
+
+// ════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════════════
+function go(id) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.sbNav a').forEach(a => a.classList.remove('on'));
+  document.getElementById('pg-' + id).classList.add('on');
+  document.getElementById('nav-' + id).classList.add('on');
+  const [title, sub] = PAGES[id] || ['', ''];
+  document.getElementById('tbTitle').textContent = title;
+  document.getElementById('tbSub').textContent   = sub;
+  if (id === 'hist') loadHistory();
+  if (id === 'sc')   loadScenario();
+  if (id === 'mem')  runMemory();
+}
+
+// ════════════════════════════════════════════════════════════
+//  PREDICT
+// ════════════════════════════════════════════════════════════
+async function runPredict() {
+  const sh  = +document.getElementById('ss').value;
+  const att = +document.getElementById('as').value;
+  const sl  = +document.getElementById('sls').value;
+  const rv  = +document.getElementById('rs').value;
+  const btn = document.getElementById('btnPredict');
+  btn.disabled = true; btn.textContent = '⏳ Predicting...';
+  try {
+    const d = await api('POST', '/predict', {study_hours:sh, attendance:att, sleep_hours:sl, revision_freq:rv});
+    document.getElementById('pNum').textContent = d.predicted_marks;
+    document.getElementById('pGrd').textContent = d.grade;
+    document.getElementById('pSub').textContent = 'Based on your inputs above';
+    document.getElementById('bS').textContent   = d.breakdown.study_contribution;
+    document.getElementById('bA').textContent   = d.breakdown.attendance_contribution;
+    document.getElementById('bSl').textContent  = d.breakdown.sleep_contribution;
+    document.getElementById('bR').textContent   = d.breakdown.revision_contribution;
+    // Dashboard stats
+    document.getElementById('dMarks').textContent = d.predicted_marks;
+    document.getElementById('dGrade').textContent = d.grade.split(' ')[0];
+    document.getElementById('dStudy').textContent = sh + 'h';
+    document.getElementById('dAtt').textContent   = att + '%';
+    // Chart
+    const vals = [d.breakdown.study_contribution, d.breakdown.attendance_contribution,
+                  d.breakdown.sleep_contribution, d.breakdown.revision_contribution];
+    if (pChartI) pChartI.destroy();
+    pChartI = new Chart(document.getElementById('pChart'), {
+      type: 'bar',
+      data: {
+        labels: ['📖 Study Hours', '🏫 Attendance', '😴 Sleep Hours', '🔁 Revision'],
+        datasets: [{
+          label: 'Contribution to Marks',
+          data: vals,
+          backgroundColor: ['rgba(108,71,255,.85)','rgba(159,122,234,.85)','rgba(167,139,250,.85)','rgba(196,181,253,.85)'],
+          borderRadius: 10, borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {display: false},
+          tooltip: {callbacks: {label: ctx => `+${ctx.raw} marks`}}
+        },
+        scales: {y: {beginAtZero: true, grid: {color: '#f5f4fb'}, ticks: {callback: v => '+' + v}}}
+      }
+    });
+  } catch(e) { alert('Prediction error: ' + e.message); }
+  finally { btn.disabled = false; btn.innerHTML = '🔮 Predict My Marks'; }
+}
+
+// ════════════════════════════════════════════════════════════
+//  PRESCRIPTIVE
+// ════════════════════════════════════════════════════════════
+const RICONS = {study_hours:'📖', attendance:'🏫', sleep_hours:'😴', revision_freq:'🔁'};
+const RLBLS  = {study_hours:'Study Hours / Day', attendance:'Attendance %', sleep_hours:'Sleep Hours / Night', revision_freq:'Revision Sessions / Week'};
+
+async function runReverse() {
+  const target = +document.getElementById('ts').value;
+  try {
+    const d = await api('POST', '/reverse', {target_marks: target});
+    let html = '';
+    d.recommendations.forEach(r => {
+      const cls = r.impact === 'High' ? 'impH' : r.impact === 'Medium' ? 'impM' : 'impL';
+      html += `<div class="recItem">
+        <div class="rIco">${RICONS[r.factor]}</div>
+        <div class="rBody">
+          <strong>${RLBLS[r.factor]}</strong>
+          <span>Aim for: <b style="color:var(--p)">${r.recommended_value}</b> to reach your target</span>
+        </div>
+        <span class="impBadge ${cls}">${r.impact} Impact</span>
+      </div>`;
+    });
+    html += `<div class="recResult">
+      <strong>✅ Follow this plan → ${d.predicted_with_recommendations} marks predicted!</strong>
+    </div>`;
+    document.getElementById('recOut').innerHTML = html;
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  SCENARIO
+// ════════════════════════════════════════════════════════════
+async function loadScenario() {
+  try {
+    const d = await api('GET', '/scenario');
+    const [hi, me, lo] = d.scenarios;
+    document.getElementById('scHi').textContent  = hi.predicted_marks;
+    document.getElementById('scHiG').textContent = hi.grade;
+    document.getElementById('scMe').textContent  = me.predicted_marks;
+    document.getElementById('scMeG').textContent = me.grade;
+    document.getElementById('scLo').textContent  = lo.predicted_marks;
+    document.getElementById('scLoG').textContent = lo.grade;
+
+    // Table
+    const gcls = g => g.startsWith('O') ? 'gO' : g.startsWith('A') ? 'gA' : g.startsWith('B') ? 'gB' : 'gC';
+    document.getElementById('scTb').innerHTML = d.scenarios.map(s =>
+      `<tr>
+        <td><b>${s.scenario}</b></td>
+        <td>${s.inputs.study_hours}h</td>
+        <td>${s.inputs.attendance}%</td>
+        <td>${s.inputs.sleep_hours}h</td>
+        <td>${s.inputs.revision_freq}×/wk</td>
+        <td><b>${s.predicted_marks}</b></td>
+        <td><span class="gBadge ${gcls(s.grade)}">${s.grade}</span></td>
+      </tr>`).join('');
+
+    // Chart
+    if (scChartI) scChartI.destroy();
+    scChartI = new Chart(document.getElementById('scChart'), {
+      type: 'bar',
+      data: {
+        labels: d.scenarios.map(s => s.scenario),
+        datasets: [{
+          label: 'Predicted Marks',
+          data: d.scenarios.map(s => s.predicted_marks),
+          backgroundColor: ['rgba(34,197,94,.85)', 'rgba(245,158,11,.85)', 'rgba(239,68,68,.85)'],
+          borderRadius: 12, borderSkipped: false, barThickness: 60
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {display: false},
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.raw} marks — ${d.scenarios[ctx.dataIndex].grade}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true, max: 100,
+            grid: {color: '#f5f4fb'},
+            ticks: {callback: v => v + '%'}
+          }
+        }
+      }
+    });
+  } catch(e) {
+    document.getElementById('scTb').innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--red);padding:20px">❌ Could not load scenarios: ${e.message}</td></tr>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  MEMORY
+// ════════════════════════════════════════════════════════════
+async function runMemory() {
+  const freq = document.getElementById('mFreq').value;
+  try {
+    const d = await api('GET', '/memory?revision_freq=' + freq);
+    document.getElementById('revBadges').innerHTML = d.revision_days.map(day =>
+      `<span class="revB">Day ${day}</span>`).join('');
+    if (mChartI) mChartI.destroy();
+    mChartI = new Chart(document.getElementById('mChart'), {
+      type: 'line',
+      data: {
+        labels: d.memory_curve.map(p => 'Day ' + p.day),
+        datasets: [{
+          label: 'Memory Retention %',
+          data: d.memory_curve.map(p => p.retention),
+          borderColor: '#6c47ff', backgroundColor: 'rgba(108,71,255,.08)',
+          fill: true, tension: 0.4,
+          pointBackgroundColor: d.memory_curve.map(p => d.revision_days.includes(p.day) ? '#22c55e' : '#6c47ff'),
+          pointRadius: d.memory_curve.map(p => d.revision_days.includes(p.day) ? 8 : 3),
+          pointHoverRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {display: false},
+          tooltip: {callbacks: {label: ctx => ` ${ctx.raw}% retention`}}
+        },
+        scales: {
+          x: {grid: {display: false}},
+          y: {
+            min: 0, max: 100,
+            grid: {color: '#f5f4fb'},
+            ticks: {callback: v => v + '%'},
+            title: {display: true, text: 'Memory Retention %', color: '#6b7280'}
+          }
+        }
+      }
+    });
+  } catch(e) { console.warn('Memory error:', e); }
+}
+
+// ════════════════════════════════════════════════════════════
+//  HISTORY
+// ════════════════════════════════════════════════════════════
+async function loadHistory() {
+  const wrap = document.getElementById('histWrap');
+  wrap.innerHTML = '<div class="spin">⏳ Loading your history...</div>';
+  try {
+    const d = await api('GET', '/history');
+    if (!d.history.length) {
+      wrap.innerHTML = '<div class="empty">📭 No predictions yet.<br>Go to <b>Predict Marks</b> to get started!</div>';
+      return;
+    }
+    const gcls = g => g.startsWith('O') ? 'gO' : g.startsWith('A') ? 'gA' : g.startsWith('B') ? 'gB' : 'gC';
+    wrap.innerHTML = `
+      <table class="hTable">
+        <thead><tr><th>#</th><th>Study Hrs</th><th>Attendance</th><th>Sleep Hrs</th><th>Revision/Wk</th><th>Predicted Marks</th><th>Grade</th><th>Date</th></tr></thead>
+        <tbody>
+          ${d.history.map((r, i) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td><b>${r.study_hours}h</b></td>
+              <td>${r.attendance}%</td>
+              <td>${r.sleep_hours}h</td>
+              <td>${r.revision_freq}×</td>
+              <td><b style="font-size:16px">${r.predicted_marks}</b></td>
+              <td><span class="gBadge ${gcls(r.grade)}">${r.grade}</span></td>
+              <td>${r.created_at}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) {
+    wrap.innerHTML = `<div class="empty" style="color:var(--red)">❌ Could not load history: ${e.message}</div>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  CHATBOT
+// ════════════════════════════════════════════════════════════
+function addMsg(text, isUser) {
+  const box = document.getElementById('chatMsgs');
+  const init = USER ? USER.name.charAt(0).toUpperCase() : 'M';
+  const div = document.createElement('div');
+  div.className = isUser ? 'mUser' : 'mBot';
+  div.innerHTML = `<div class="mAv">${isUser ? init : '🤖'}</div>
+    <div class="mBbl">${text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>')}</div>`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function addTyping() {
+  const box = document.getElementById('chatMsgs');
+  const div = document.createElement('div');
+  div.className = 'mBot mTyping'; div.id = 'typing';
+  div.innerHTML = '<div class="mAv">🤖</div><div class="mBbl">Typing...</div>';
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+async function sendChat() {
+  const inp = document.getElementById('chatIn');
+  const msg = inp.value.trim();
+  if (!msg) return;
+  addMsg(msg, true);
+  inp.value = '';
+  inp.disabled = true;
+  addTyping();
+  try {
+    const d = await api('POST', '/chat', {message: msg, context: {}});
+    removeTyping();
+    setTimeout(() => addMsg(d.reply, false), 200);
+  } catch(e) {
+    removeTyping();
+    addMsg('⚠️ Could not connect to the server. Please make sure the server is running (open start.command).', false);
+  } finally {
+    inp.disabled = false;
+    inp.focus();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('chatIn').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendChat();
+  });
+  document.getElementById('lPass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+});
+
+function cSend(t) {
+  document.getElementById('chatIn').value = t;
+  sendChat();
+}
+</script>
+</body>
+</html>
